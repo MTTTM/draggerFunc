@@ -59,7 +59,6 @@ const setFriction = (num) => {
 };
 //手机&&电脑 事件兼容
 function getEvent(e, type) {
-    console.log("aft", e.stopPropagation);
     if (e.targetTouches && e.targetTouches[0]) {
         if (type == "obj") {
             return {
@@ -92,13 +91,11 @@ function draggerInit(wrap, child) {
         let eventObj = getEvent(event, "obj");
         let eventBaseInfo = eventObj.eInfo;
         let eItem = eventObj.eItem;
-        console.log("eeeee", eventBaseInfo);
         eventBaseInfo.stopPropagation();
         eventBaseInfo.preventDefault();
         //获取x和y
         var nx = eItem.clientX;
         var ny = eItem.clientY;
-        console.log("touchmove", ny);
         //计算移动后的左偏移量和顶部的偏移量
         // var nl = nx - (x - l);
         // var nt = ny - (y - t);
@@ -108,24 +105,24 @@ function draggerInit(wrap, child) {
         wrapRect = wrap.getBoundingClientRect(); //必须从新获取
         childRect = child.getBoundingClientRect(); //必须重新获取
         let fPar = 1;
+        //内容刚刚贴着容器底部的距离
+        let bottomLimit = -(childRect.height - wrapRect.height - wrapRect.top);
         //顶部超出后，添加摩擦力，并且越来越大
         if (childRect.top >= wrapRect.top) {
             fPar = (wrapRect.top / childRect.top) * 0.2;
-            console.log("超出 fPar", fPar);
-        } else if (
-            childRect.top <= -(childRect.height - wrapRect.height - wrapRect.top)
-        ) {
+            console.warn("超出 fPar", fPar, t + fPar * (ny - y));
+        } else if (childRect.top <= bottomLimit) {
             let wrapBottom = wrapRect.height + wrapRect.top;
             let childBottom = childRect.height + childRect.top;
             fPar = Math.abs(childBottom) / wrapBottom;
-            console.log(
-                "超出底部 fPar",
+            console.error(
+                "在车上顶部超出，不应该到这里的",
                 fPar,
-                "childBottom",
-                childBottom,
-                "wrapBottom",
-                wrapBottom
+                "结果",
+                t + fPar * (ny - y)
             );
+        } else {
+            console.log("其他===========,", fPar, "结果:", t + fPar * (ny - y));
         }
         nt = t + fPar * (ny - y);
         setTcss(child, {
@@ -136,7 +133,6 @@ function draggerInit(wrap, child) {
     };
     let downFn = function(event) {
         let e = getEvent(event);
-        console.log("touchstart", e);
         //获取x坐标和y坐标
         x = e.clientX;
         y = e.clientY;
@@ -167,6 +163,8 @@ function draggerInit(wrap, child) {
         window.removeEventListener("mousemove", moveFn);
         window.removeEventListener("touchmove", moveFn);
         console.log("onmouseUP", childRect.top, wrapRect.top);
+        //内容刚刚贴着容器底部的距离
+        let bottomLimit = -(childRect.height - wrapRect.height - wrapRect.top);
         if (childRect.top > wrapRect.top) {
             child.style.transition = "transform .2s ease-in-out"; //添加过渡动画，下一次点击时候，一定要移除掉
             console.log("放开后设置");
@@ -174,14 +172,12 @@ function draggerInit(wrap, child) {
                 translateX: 0 + "px",
                 translateY: 0 + "px",
             });
-        } else if (
-            childRect.top < -(childRect.height - wrapRect.height - wrapRect.top)
-        ) {
+        } else if (childRect.top < bottomLimit) {
             console.log("放开后设置,超出底部");
             child.style.transition = "transform .2s ease-in-out"; //添加过渡动画，下一次点击时候，一定要移除掉
             setTcss(child, {
                 translateX: 0 + "px",
-                translateY: -(childRect.height - wrapRect.height) + "px",
+                translateY: bottomLimit + "px",
             });
         } else {
             child.style.transition = "none";
