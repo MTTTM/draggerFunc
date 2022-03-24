@@ -68,18 +68,16 @@ function draggerInit(wrap, child) {
     var y = 0;
     var l = 0;
     var t = 0;
-    var isDown = false;
     //鼠标按下事件
     dv.onmousedown = function(e) {
         //获取x坐标和y坐标
         x = e.clientX;
         y = e.clientY;
         //重置过渡样式
-        child.style.transition = "";
+        child.style.transition = "none";
         //获取左部和顶部的偏移量
         l = getTcss(dv, "translateX");
         t = getTcss(dv, "translateY");
-        console.log("是否可拖拽 mousedown", isDown);
         //设置样式
         dv.style.cursor = "move";
         //鼠标移动
@@ -135,9 +133,10 @@ function draggerInit(wrap, child) {
             childRect = child.getBoundingClientRect(); //必须重新获取
             window.onmousemove = null;
             dv.style.cursor = "default";
-            child.style.transition = "translate .5s"; //添加过渡动画，下一次点击时候，一定要移除掉
+
             console.log("onmouseUP", childRect.top, wrapRect.top);
             if (childRect.top > wrapRect.top) {
+                child.style.transition = "transform .2s ease-in-out"; //添加过渡动画，下一次点击时候，一定要移除掉
                 console.log("放开后设置");
                 setTcss(child, {
                     translateX: 0 + "px",
@@ -147,12 +146,21 @@ function draggerInit(wrap, child) {
                 childRect.top < -(childRect.height - wrapRect.height - wrapRect.top)
             ) {
                 console.log("放开后设置,超出底部");
+                child.style.transition = "transform .2s ease-in-out"; //添加过渡动画，下一次点击时候，一定要移除掉
                 setTcss(child, {
                     translateX: 0 + "px",
                     translateY: -(childRect.height - wrapRect.height) + "px",
                 });
+            } else {
+                child.style.transition = "none";
             }
         };
+    //动画过渡结束监听
+    function resetTransition() {
+        child.style.transition = "none";
+    }
+    child.removeEventListener("transitionend", resetTransition, false);
+    child.addEventListener("transitionend", resetTransition, false);
 }
 
 function ready() {
