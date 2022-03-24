@@ -152,6 +152,14 @@ function draggerInit(wrap, child) {
     };
 
     let endFn = function() {
+        if (!wrap || !child) {
+            //因为是挂载在全局里面的，及时dom被销毁，window的监听事件依旧是存在的，
+            //所以这里需要处理下，避免一直都存在监听
+            window.removeEventListener("mouseup", endFn);
+            window.removeEventListener("mouseleave", endFn);
+            window.removeEventListener("touchend", endFn);
+            return;
+        }
         wrapRect = wrap.getBoundingClientRect(); //必须从新获取
         childRect = child.getBoundingClientRect(); //必须重新获取
         dv.style.cursor = "default";
