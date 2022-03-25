@@ -11,26 +11,26 @@
             margin: 0;
             padding: 0;
         }
-        
+
         body {
             padding-top: 90px;
         }
-        
+
         .box {
             outline: 1px darkblue solid;
             height: 300px;
             overflow: hidden;
         }
-        
+
         .item {
             height: 30px;
             background-color: palegoldenrod;
         }
-        
+
         .item:nth-child(odd) {
             background-color: brown;
         }
-        
+
         .fixed {
             position: fixed;
             right: 0;
@@ -39,7 +39,7 @@
             display: flex;
             align-items: center;
         }
-        
+
         input {
             height: 30px;
         }
@@ -52,7 +52,7 @@
         <button id="showDis">显示信息</button>
         <button id="btn">跳转到指定行</button>
     </div>
-    <p id="info">没数据---</p>
+
     <div class="box">
         <div class="innerBox">
             <div class="item">1</div>
@@ -77,19 +77,20 @@
             <div class="item">20</div>
         </div>
     </div>
+    <p id="info">没数据---</p>
     <script src="./index.js"></script>
     <script>
-        window.onload = function() {
+        window.onload = function () {
             var btn = document.querySelector("#btn");
             var input = document.querySelector("#input");
             var items = document.querySelectorAll(".item");
             let val = input.value;
-            btn.onclick = function() {
+            btn.onclick = function () {
                 val = input.value;
                 console.log("value", val)
                 window.Dragger.scrollToDom(items[Number(val) - 1]);
             }
-            document.querySelector("#showDis").onclick = function() {
+            document.querySelector("#showDis").onclick = function () {
                 val = input.value;
                 let t = "";
                 let itemTop = items[Number(val) - 1].getBoundingClientRect().top;

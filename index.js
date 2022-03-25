@@ -23,6 +23,7 @@ const setTcss = (dom, cssObjOrStr, val) => {
             let t = "";
             transformMap.forEach((item) => {
                 let attrVal = dom.getAttribute(item);
+                console.log("cssObjOrStr", cssObjOrStr, attrVal)
                 if (attrVal != undefined) {
                     t += `${item}(${attrVal})`;
                 }
@@ -46,8 +47,8 @@ const getTcss = (dom, name) => {
     }
     if (!name || transformMap.findIndex((el) => el == name) == -1) {
         throw `第二个属性值为${name}，不在transformMap之内${JSON.stringify(
-      transformMap
-    )}`;
+            transformMap
+        )}`;
     }
     let val = parseFloat(dom.getAttribute(name));
     return val ? val : 0;
@@ -91,7 +92,7 @@ function draggerInit(wrap, child) {
     var t = 0;
     var scrollY = 0; //记录Y方向的滚动距离
     var scrollX = 0; //记录X方向的滚动距离
-    let moveFn = function(event) {
+    let moveFn = function (event) {
         let eventObj = getEvent(event, "obj");
         let eventBaseInfo = eventObj.eInfo;
         let eItem = eventObj.eItem;
@@ -135,7 +136,7 @@ function draggerInit(wrap, child) {
         });
         //新增========end
     };
-    let downFn = function(event) {
+    let downFn = function (event) {
         console.log("event", event);
         let e = getEvent(event);
         //获取x坐标和y坐标
@@ -152,7 +153,7 @@ function draggerInit(wrap, child) {
         window.addEventListener("touchmove", moveFn, { passive: false });
     };
 
-    let endFn = function() {
+    let endFn = function () {
         if (!wrap || !child) {
             //因为是挂载在全局里面的，及时dom被销毁，window的监听事件依旧是存在的，
             //所以这里需要处理下，避免一直都存在监听
@@ -211,36 +212,28 @@ function draggerInit(wrap, child) {
     }
     child.removeEventListener("transitionend", resetTransition, false);
     child.addEventListener("transitionend", resetTransition, false);
-    const scrollToDom = function(dom) {
+    const scrollToDom = function (dom) {
         if (dom instanceof Element) {
             let targetDomRectObj = dom.getBoundingClientRect(); //检测目标的rect
             let wrapBoxRect = wrap.getBoundingClientRect(); //必须从新获取，容器的rect
             let childBoxRect = child.getBoundingClientRect(); //必须重新获取，容器内容列表的rect
             let currScrollBoxSwipeY = getTcss(child, "translateY");
-
+            let translateY = targetDomRectObj.top - wrapBoxRect.top;
+            let end = -translateY + currScrollBoxSwipeY;
             //内容刚刚贴着容器底部的距离
             let bottomLimit = -(
                 childBoxRect.height -
-                wrapBoxRect.height -
-                wrapBoxRect.top
+                wrapBoxRect.height
             );
-            console.log("scrollToDom", dom, targetDomRectObj.top > wrapBoxRect.top);
-            let translateY = targetDomRectObj.top - wrapBoxRect.top;
-            console.log(
-                "targetDomRectObj.top",
-                targetDomRectObj.top,
-                "wrapBoxRect.top",
-                wrapBoxRect.top
-            );
-            // if (targetDomRectObj.top > wrapBoxRect.top) {
-            //     translateY = -translateY;
-            //     if (translateY < bottomLimit) {
-            //         translateY = bottomLimit;
-            //     }
-            // }
+            console.log("scrollToDom", "end:", end, "bottomLimit", bottomLimit, "translateY", translateY);
+
+            if (end < 0 && end < bottomLimit) {
+                end = bottomLimit;
+            }
+
             setTcss(child, {
                 translateX: -(targetDomRectObj.left - wrapBoxRect.left) + "px",
-                translateY: -translateY + currScrollBoxSwipeY + "px",
+                translateY: end + "px",
             });
         } else {
             throw `scrollToDom函数应该接受一个Element元素，实际上接受的是${typeof dom}`;
