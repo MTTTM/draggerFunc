@@ -89,6 +89,8 @@ function draggerInit(wrap, child) {
     var y = 0;
     var l = 0;
     var t = 0;
+    var scrollY = 0; //记录Y方向的滚动距离
+    var scrollX = 0; //记录X方向的滚动距离
     let moveFn = function(event) {
         let eventObj = getEvent(event, "obj");
         let eventBaseInfo = eventObj.eInfo;
@@ -113,7 +115,7 @@ function draggerInit(wrap, child) {
         if (childRect.top >= wrapRect.top) {
             fPar = (wrapRect.top / childRect.top) * 0.2;
             console.warn("超出 fPar", fPar, t + fPar * (ny - y));
-        } else if (childRect.top <= bottomLimit) {
+        } else if (childRect.top - wrapRect.top <= bottomLimit) {
             let wrapBottom = wrapRect.height + wrapRect.top;
             let childBottom = childRect.height + childRect.top;
             fPar = Math.abs(childBottom) / wrapBottom;
