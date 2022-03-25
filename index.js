@@ -73,6 +73,8 @@ function getEvent(e, type) {
                 eInfo: e,
                 eItem: e,
             };
+        } else {
+            return e;
         }
     }
 }
@@ -106,7 +108,7 @@ function draggerInit(wrap, child) {
         childRect = child.getBoundingClientRect(); //必须重新获取
         let fPar = 1;
         //内容刚刚贴着容器底部的距离
-        let bottomLimit = -(childRect.height - wrapRect.height - wrapRect.top);
+        let bottomLimit = -(childRect.height - wrapRect.height); //- wrapRect.top
         //顶部超出后，添加摩擦力，并且越来越大
         if (childRect.top >= wrapRect.top) {
             fPar = (wrapRect.top / childRect.top) * 0.2;
@@ -132,6 +134,7 @@ function draggerInit(wrap, child) {
         //新增========end
     };
     let downFn = function(event) {
+        console.log("event", event);
         let e = getEvent(event);
         //获取x坐标和y坐标
         x = e.clientX;
@@ -164,7 +167,14 @@ function draggerInit(wrap, child) {
         window.removeEventListener("touchmove", moveFn);
         console.log("onmouseUP", childRect.top, wrapRect.top);
         //内容刚刚贴着容器底部的距离
-        let bottomLimit = -(childRect.height - wrapRect.height - wrapRect.top);
+        let setBottomLimit = -(childRect.height - wrapRect.height); //var innerBox=document.querySelector(".innerBox").getBoundingClientRect();
+        var bottomLimit = -(childRect.height - wrapRect.height); //- wrapRect.top
+        console.log(
+            "childRect.top",
+            childRect.top - wrapRect.top,
+            "bottomLimit",
+            bottomLimit
+        );
         if (childRect.top > wrapRect.top) {
             child.style.transition = "transform .2s ease-in-out"; //添加过渡动画，下一次点击时候，一定要移除掉
             console.log("放开后设置");
@@ -172,12 +182,13 @@ function draggerInit(wrap, child) {
                 translateX: 0 + "px",
                 translateY: 0 + "px",
             });
-        } else if (childRect.top < bottomLimit) {
+        } else if (childRect.top - wrapRect.top <= bottomLimit) {
+            //这里的childRect.top - wrapRect.top，要好好整理下思路
             console.log("放开后设置,超出底部");
             child.style.transition = "transform .2s ease-in-out"; //添加过渡动画，下一次点击时候，一定要移除掉
             setTcss(child, {
                 translateX: 0 + "px",
-                translateY: bottomLimit + "px",
+                translateY: setBottomLimit + "px",
             });
         } else {
             child.style.transition = "none";
