@@ -216,6 +216,8 @@ function draggerInit(wrap, child) {
             let targetDomRectObj = dom.getBoundingClientRect(); //检测目标的rect
             let wrapBoxRect = wrap.getBoundingClientRect(); //必须从新获取，容器的rect
             let childBoxRect = child.getBoundingClientRect(); //必须重新获取，容器内容列表的rect
+            let currScrollBoxSwipeY = getTcss(child, "translateY");
+
             //内容刚刚贴着容器底部的距离
             let bottomLimit = -(
                 childBoxRect.height -
@@ -224,15 +226,21 @@ function draggerInit(wrap, child) {
             );
             console.log("scrollToDom", dom, targetDomRectObj.top > wrapBoxRect.top);
             let translateY = targetDomRectObj.top - wrapBoxRect.top;
-            if (targetDomRectObj.top > wrapBoxRect.top) {
-                translateY = -translateY;
-                if (translateY < bottomLimit) {
-                    translateY = bottomLimit;
-                }
-            }
+            console.log(
+                "targetDomRectObj.top",
+                targetDomRectObj.top,
+                "wrapBoxRect.top",
+                wrapBoxRect.top
+            );
+            // if (targetDomRectObj.top > wrapBoxRect.top) {
+            //     translateY = -translateY;
+            //     if (translateY < bottomLimit) {
+            //         translateY = bottomLimit;
+            //     }
+            // }
             setTcss(child, {
                 translateX: -(targetDomRectObj.left - wrapBoxRect.left) + "px",
-                translateY: translateY + "px",
+                translateY: -translateY + currScrollBoxSwipeY + "px",
             });
         } else {
             throw `scrollToDom函数应该接受一个Element元素，实际上接受的是${typeof dom}`;

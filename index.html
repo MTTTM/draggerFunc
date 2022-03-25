@@ -49,8 +49,10 @@
 <body>
     <div class="div fixed">
         <input type="text" type="number" value="8" id="input">
+        <button id="showDis">显示信息</button>
         <button id="btn">跳转到指定行</button>
     </div>
+    <p id="info">没数据---</p>
     <div class="box">
         <div class="innerBox">
             <div class="item">1</div>
@@ -81,10 +83,19 @@
             var btn = document.querySelector("#btn");
             var input = document.querySelector("#input");
             var items = document.querySelectorAll(".item");
+            let val = input.value;
             btn.onclick = function() {
-                let val = input.value;
+                val = input.value;
                 console.log("value", val)
-                window.Dragger.scrollToDom(items[Number(val)]);
+                window.Dragger.scrollToDom(items[Number(val) - 1]);
+            }
+            document.querySelector("#showDis").onclick = function() {
+                val = input.value;
+                let t = "";
+                let itemTop = items[Number(val) - 1].getBoundingClientRect().top;
+                let boxTop = document.querySelector(".box").getBoundingClientRect().top;
+                document.querySelector("#info").innerHTML = `子元素#${val}的top:${itemTop},
+                容器的Top:${boxTop}，相减结果:${itemTop - boxTop}`;
             }
         }
     </script>
