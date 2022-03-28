@@ -55,8 +55,33 @@ const getTcss = (dom, name) => {
 };
 //添加摩擦力
 const setFriction = (num) => {
-    var friction = 0.95;
-    return num * friction;
+    scrollY = getTcss(dv, "translateY")
+    //顶部超出后，添加摩擦力，并且越来越大
+    if (scrollY > 0) {
+        if (t <= 0) {
+            //获取左部和顶部的偏移量
+            l = getTcss(dv, "translateX");
+            t = getTcss(dv, "translateY");
+        }
+        //fPar = (wrapRect.top / Math.abs(childRect.top)) * 0.2;
+        fPar = 1 - Math.abs((wrapRect.top - childRect.top)) / (childRect.height);
+        fPar = fPar * 0.1;
+        console.warn("边界检测:超出 fPar", fPar, "Math.abs((wrapRect.top - childRect.top))", Math.abs((wrapRect.top - childRect.top)), "之前scrollY", scrollY, "结果:", t + fPar * (ny - y), 't', t, "ny", ny, "y", y, "ny-y", (ny - y));
+    } else if (childRect.top - wrapRect.top < bottomLimit) {
+        let wrapBottom = wrapRect.height + wrapRect.top;
+        let childBottom = childRect.height + childRect.top;
+        fPar = Math.abs(childBottom) / wrapBottom;
+        // console.error(
+        //     "边界检测:在车上顶部超出，不应该到这里的",
+        //     fPar,
+        //     "结果",
+        //     t + fPar * (ny - y)
+        // );
+    } else {
+        fPar = 1;
+        console.log("边界检测:其他===========,", fPar, "结果:", t + fPar * (ny - y), 't', t, "ny", ny, "y", y, "ny-y", (ny - y));
+    }
+    return fPar
 };
 //手机&&电脑 事件兼容
 function getEvent(e, type) {
@@ -92,6 +117,10 @@ function draggerInit(wrap, child) {
     var t = 0;
     var scrollY = 0; //记录Y方向的滚动距离
     var scrollX = 0; //记录X方向的滚动距离
+    //鼠标放开后的惯性定时器
+    var endTimer = null;
+    var startTime = 0;//开始时间
+    var startScrollY = 0;
     let moveFn = function (event) {
         let eventObj = getEvent(event, "obj");
         let eventBaseInfo = eventObj.eInfo;
@@ -128,12 +157,12 @@ function draggerInit(wrap, child) {
             let wrapBottom = wrapRect.height + wrapRect.top;
             let childBottom = childRect.height + childRect.top;
             fPar = Math.abs(childBottom) / wrapBottom;
-            console.error(
-                "边界检测:在车上顶部超出，不应该到这里的",
-                fPar,
-                "结果",
-                t + fPar * (ny - y)
-            );
+            // console.error(
+            //     "边界检测:在车上顶部超出，不应该到这里的",
+            //     fPar,
+            //     "结果",
+            //     t + fPar * (ny - y)
+            // );
         } else {
             fPar = 1;
             console.log("边界检测:其他===========,", fPar, "结果:", t + fPar * (ny - y), 't', t, "ny", ny, "y", y, "ny-y", (ny - y));
@@ -149,6 +178,8 @@ function draggerInit(wrap, child) {
     let downFn = function (event) {
         console.log("event", event);
         let e = getEvent(event);
+        startTime = new Date().getTime();//记录开始时间
+        clearInterval(endTimer);
         //获取x坐标和y坐标
         x = e.clientX;
         y = e.clientY;
@@ -156,7 +187,7 @@ function draggerInit(wrap, child) {
         child.style.transition = "none";
         //获取左部和顶部的偏移量
         l = getTcss(dv, "translateX");
-        t = getTcss(dv, "translateY");
+        startScrollY = t = getTcss(dv, "translateY");
         //设置样式
         dv.style.cursor = "move";
         window.addEventListener("mousemove", moveFn);
@@ -205,6 +236,81 @@ function draggerInit(wrap, child) {
             });
         } else {
             child.style.transition = "none";
+            let endTime = new Date().getTime();
+            let endScrollY = getTcss(dv, "translateY");
+            let disTime = (endTime - startTime) / 1000;
+            let dis = endScrollY - startScrollY;
+            let disScrollY = Math.abs(dis);
+            let fri = 0.98;
+            let speed = disScrollY / (disTime * 1000);
+            console.log("disTime", disTime, "disScrollY", disScrollY, 'speed', speed)
+            let wrapBoxRect = wrap.getBoundingClientRect(); //必须从新获取，容器的rect
+            let childBoxRect = child.getBoundingClientRect(); //必须重新获取，容器内容列表的rect
+            let currScrollBoxSwipeY = getTcss(child, "translateY");
+            let translateY = childBoxRect.top - wrapBoxRect.top;
+            let end = -translateY + currScrollBoxSwipeY;
+            //内容刚刚贴着容器底部的距离
+            let bottomLimit = -(
+                childBoxRect.height -
+                wrapBoxRect.height
+            );
+
+            console.log("bottomLimit", bottomLimit)
+
+            //点击到放开的时间小于.8秒,就给他做物理运动
+            if (disTime < .8 && disScrollY >= 30) {
+                //现下滑
+                if (dis > 0) {
+                    clearInterval(endTimer);
+                    endTimer = setInterval(() => {
+                        endScrollY = getTcss(dv, "translateY");
+                        if (endScrollY >= 0) {
+                            child.style.transition = "transform .2s ease-in-out"; //添加过渡动画，下一次点击时候，一定要移除掉
+                            setTcss(child, {
+                                translateX: 0 + "px",
+                                translateY: 0 + "px",
+                            });
+                            clearInterval(endTimer);
+                            return;
+                        }
+                        if (speed < 0.1) {
+                            clearInterval(endTimer);
+                        }
+                        speed *= fri
+                        endScrollY += speed * 5;
+                        setTcss(child, {
+                            translateX: 0 + "px",
+                            translateY: endScrollY + "px",
+                        });
+                    }, 10)
+                }
+                else {
+                    //手指向上
+                    clearInterval(endTimer);
+                    endTimer = setInterval(() => {
+                        endScrollY = getTcss(dv, "translateY");
+                        if (endScrollY <= bottomLimit) {
+                            child.style.transition = "transform .2s ease-in-out"; //添加过渡动画，下一次点击时候，一定要移除掉
+                            setTcss(child, {
+                                translateX: 0 + "px",
+                                translateY: bottomLimit + "px",
+                            });
+                            clearInterval(endTimer);
+                            return;
+                        }
+                        if (speed < 0.1) {
+                            clearInterval(endTimer);
+                            return;
+                        }
+                        speed *= fri
+                        endScrollY -= speed * 5;
+                        setTcss(child, {
+                            translateX: 0 + "px",
+                            translateY: endScrollY + "px",
+                        });
+                    }, 10)
+                }
+            }
         }
     };
     //电脑端添加事件======
