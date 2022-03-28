@@ -112,22 +112,31 @@ function draggerInit(wrap, child) {
         let fPar = 1;
         //内容刚刚贴着容器底部的距离
         let bottomLimit = -(childRect.height - wrapRect.height); //- wrapRect.top
+        scrollY = getTcss(dv, "translateY")
         //顶部超出后，添加摩擦力，并且越来越大
-        if (childRect.top >= wrapRect.top) {
-            fPar = (wrapRect.top / childRect.top) * 0.2;
-            console.warn("超出 fPar", fPar, t + fPar * (ny - y));
-        } else if (childRect.top - wrapRect.top <= bottomLimit) {
+        if (scrollY > 0) {
+            if (t <= 0) {
+                //获取左部和顶部的偏移量
+                l = getTcss(dv, "translateX");
+                t = getTcss(dv, "translateY");
+            }
+            //fPar = (wrapRect.top / Math.abs(childRect.top)) * 0.2;
+            fPar = 1 - Math.abs((wrapRect.top - childRect.top)) / (childRect.height);
+            fPar = fPar * 0.1;
+            console.warn("边界检测:超出 fPar", fPar, "Math.abs((wrapRect.top - childRect.top))", Math.abs((wrapRect.top - childRect.top)), "之前scrollY", scrollY, "结果:", t + fPar * (ny - y), 't', t, "ny", ny, "y", y, "ny-y", (ny - y));
+        } else if (childRect.top - wrapRect.top < bottomLimit) {
             let wrapBottom = wrapRect.height + wrapRect.top;
             let childBottom = childRect.height + childRect.top;
             fPar = Math.abs(childBottom) / wrapBottom;
             console.error(
-                "在车上顶部超出，不应该到这里的",
+                "边界检测:在车上顶部超出，不应该到这里的",
                 fPar,
                 "结果",
                 t + fPar * (ny - y)
             );
         } else {
-            console.log("其他===========,", fPar, "结果:", t + fPar * (ny - y));
+            fPar = 1;
+            console.log("边界检测:其他===========,", fPar, "结果:", t + fPar * (ny - y), 't', t, "ny", ny, "y", y, "ny-y", (ny - y));
         }
         nt = t + fPar * (ny - y);
         setTcss(child, {
@@ -135,6 +144,7 @@ function draggerInit(wrap, child) {
             translateY: nt + "px",
         });
         //新增========end
+
     };
     let downFn = function (event) {
         console.log("event", event);
