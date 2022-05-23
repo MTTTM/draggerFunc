@@ -98,7 +98,15 @@
                 document.querySelector("#info").innerHTML = `子元素#${val}的top:${itemTop},
                 容器的Top:${boxTop}，相减结果:${itemTop - boxTop}`;
             }
+			
         }
+		function ready() {
+		    let box = document.querySelector(".box");
+		    var innerBox = document.querySelector(".innerBox");
+		    window.Dragger = draggerInit(box, innerBox);
+		}
+		document.removeEventListener("DOMContentLoaded", ready);
+		document.addEventListener("DOMContentLoaded", ready);
     </script>
 </body>
 

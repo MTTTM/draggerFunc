@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title></title>
+		<style type="text/css">
+			html,
+			body {
+				background: #ccc;
+			}
+
+			.wrap {
+				border: 1px solid #ccc;
+				padding: 10px;
+				display: flex;
+				height: 200px;
+				width: 400px;
+				background: #fff;
+				overflow: hidden;
+			}
+
+			.child {
+				flex: 1;
+				height: 100%;
+				overflow: hidden;
+			}
+
+			.child+.child {
+				border-left: 1px solid #eee;
+			}
+
+			.child_inner {}
+
+			.child_inner_option {
+				line-height: 45px;
+			}
+
+			.child_inner_option+.child_inner_option {
+				border-top: 1px solid #eee;
+			}
+
+			.child_inner_option.select {
+				background: rgba(0, 0, 0, .2);
+			}
+		</style>
+	</head>
+	<body>
+		<div class="wrap">
+			<!-- <div class="child">
+				<div class="child_inner"></div>
+			</div> -->
+		</div>
+		<script src="./index.js"></script>
+		<script src="./select.js"></script>
+
+
+		<script type="text/javascript">
+			function createData(noNext) {
+				const arr = [];
+				for (let i = 0; i < 40; i++) {
+					arr.push({
+						value: i,
+						title: "选项-" + i,
+						children: noNext ? [] : createData(true)
+					})
+				}
+				return arr;
+			}
+
+			function createDoms(data, cb) {
+
+				let childDom = document.createElement("div");
+				childDom.className = "child";
+				let childInner = document.createElement("div");
+				childInner.classList.add("child_inner");
+
+				function toggerClassName() {
+
+				}
+				data.forEach((item, index) => {
+					let selectItem = document.createElement("div");
+					selectItem.className = "child_inner_option";
+					selectItem.innerHTML = item.title;
+					selectItem.key = item.value;
+					selectItem.title = item.title;
+					selectItem.index = item.index;
+					selectItem.children = item.children || [];
+					childInner.appendChild(selectItem)
+				})
+				childDom.appendChild(childInner);
+				document.querySelector(".wrap").appendChild(childDom);
+				//通过事件代理，替换直接给子节点绑定事件
+				childDom.dragger = draggerInit(childDom, childInner, {
+					clickHandler: (event) => {
+						let target = event.target;
+						if (target.classList.contains('child_inner_option')) {
+							let matchItem={};
+							let items = target.parentNode.querySelectorAll(".child_inner_option");
+							for (let v = 0; v < items.length; v++) {
+								items[v].classList.remove("select");	
+								if(items[v]===target){
+									matchItem=data[v];
+								}
+							}
+							target.classList.add("select");
+							cb(matchItem, target.index, target);	
+						}
+					}
+				});
+			}
+
+
+			function createSelect(data, optionClickCb) {
+				createDoms(data, optionClickCb);
+			}
+
+			function doSomeThing() {
+				let data = createData();
+				//无限回调
+				function clickHandler(data, cb) {
+					createSelect(data, (item, index, target) => {
+						cb(item, index, target);
+						if (item.children.length) {
+							clickHandler(item.children, cb)
+						}
+					});
+				}
+				clickHandler(data, (item, index, target) => {
+					let nextParentSibling = target.parentNode.parentNode.nextSibling;
+					if (nextParentSibling) {
+						nextParentSibling.parentNode.removeChild(nextParentSibling)
+					}
+					console.log("点击元素", item)
+				})
+
+
+			}
+			document.removeEventListener("DOMContentLoaded", doSomeThing);
+			document.addEventListener("DOMContentLoaded", doSomeThing);
+		</script>
+	</body>
+</html>
